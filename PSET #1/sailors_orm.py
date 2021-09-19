@@ -61,7 +61,7 @@ class Reservation(Base):
     def __init__(self, data):
         self.sid = data[0]
         self.bid = data[1]
-        self.day = datetime.datetime.strptime(data[2], "%Y-%m-%d")
+        self.day = datetime.datetime.strptime(data[2], "%Y/%m/%d")
 
     def __repr__(self):
         return "<Reservation(sid=%s, bid=%s, day=%s)>" % (self.sid, self.bid, self.day)
