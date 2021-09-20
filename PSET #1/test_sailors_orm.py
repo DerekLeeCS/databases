@@ -98,18 +98,31 @@ def test_q6():
     results = session.execute(statement).fetchall()
     assert results == ans
 
-# def test_q7():
-#     ans = [
-#         (1, 24, 'scruntus', 33),
-#         (3, 85, 'art', 25),
-#         (7, 22, 'dusting', 16), # currently returns 'ossola' b/c multiple answers
-#         (8, 31, 'lubber', 25),
-#         (9, 74, 'horatio', 25),
-#         (10, 58, 'rusty', 35)
-#     ]
+def test_q7():
+    ans = [
+        (1, 24, 'scruntus', 33),
+        (1, 29, 'brutus', 33),
+        (3, 85, 'art', 25),
+        (3, 89, 'dye', 25),
+        (7, 61, 'ossola', 16),
+        (7, 64, 'horatio', 16),
+        (8, 32, 'andy', 25),
+        (8, 59, 'stum', 25),
+        (9, 74, 'horatio', 25),
+        (9, 88, 'dan', 25),
+        (10, 58, 'rusty', 35),
+        (10, 60, 'jit', 35),
+        (10, 62, 'shaun', 35),
+        (10, 71, 'zorba', 35)
+    ]
 
-#     statement = select(Sailor.rating, Sailor.sid, Sailor.sname, func.min(Sailor.age)) \
-#         .select_from(Sailor) \
-#         .group_by(Sailor.rating)
-#     results = session.execute(statement).fetchall()
-#     assert results == ans
+    innerStatement = select(Sailor.rating, func.min(Sailor.age).label("min_age")) \
+        .select_from(Sailor) \
+        .group_by(Sailor.rating) \
+        .alias("temp1")
+    statement = select(Sailor.rating, Sailor.sid, Sailor.sname, Sailor.age) \
+        .select_from(Sailor) \
+        .join(innerStatement, text("sailors.rating = temp1.rating AND age = min_age")) \
+        .order_by(Sailor.rating, Sailor.sid)
+    results = session.execute(statement).fetchall()
+    assert results == ans
