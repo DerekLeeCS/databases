@@ -29,7 +29,7 @@ def test_q1():
         .select_from(Reservation) \
         .group_by(Reservation.bid) \
         .having(text("num_reserves > 0")) \
-        .subquery()
+        .alias("temp1")
     statement = select(Boat.bid, Boat.bname, text("num_reserves")) \
         .select_from(Boat) \
         .join(innerStatement)
@@ -55,8 +55,9 @@ def test_q4():
         .alias("temp3")
     statement = select(Boat.bid, Boat.bname) \
         .select_from(Boat) \
-        .join(innerStatement, text("bid = bid_temp"))   # This leads to a cartesian join??
+        .join(innerStatement, text("bid = bid_temp"))
     results = session.execute(statement).fetchall()
+
     assert results == ans
 
 def test_q5():
@@ -77,16 +78,17 @@ def test_q5():
     excludeInner2Statement = select(Boat.bid) \
         .select_from(Boat) \
         .where(Boat.color == "red") \
-        .subquery()
+        .alias("temp1")
     excludeInnerStatement = select(Reservation.sid) \
         .select_from(Reservation) \
         .join(excludeInner2Statement) \
-        .subquery()
+        .alias("temp2")
     excludeStatement = select(Sailor.sid, Sailor.sname) \
         .select_from(Sailor) \
         .join(excludeInnerStatement)
     statement = except_(mainStatement, excludeStatement)
     results = session.execute(statement).fetchall()
+
     assert results == ans
 
 def test_q6():
@@ -96,6 +98,7 @@ def test_q6():
         .select_from(Sailor) \
         .where(Sailor.rating == 10)
     results = session.execute(statement).fetchall()
+
     assert results == ans
 
 def test_q7():
@@ -125,4 +128,5 @@ def test_q7():
         .join(innerStatement, text("sailors.rating = temp1.rating AND age = min_age")) \
         .order_by(Sailor.rating, Sailor.sid)
     results = session.execute(statement).fetchall()
+
     assert results == ans
