@@ -2,7 +2,6 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 from sqlalchemy.sql.expression import except_, text
-from sqlalchemy.sql.selectable import subquery
 from sailors_orm import Sailor, Boat, Reservation
 
 engine = create_engine('sqlite:///sailors.db', echo=True)
@@ -38,36 +37,25 @@ def test_q1():
 
     assert results == ans
 
-# def test_q4():
-#     ans = [(101, 'Interlakeq')]
-
-#     inner2Statement = select(Reservation.bid, func.count().label("counts")) \
-#         .select_from(Reservation) \
-#         .group_by(Reservation.bid) \
-#         .subquery()
-#     innerStatement = select(text("bid AS bid1"), func.max(text("counts"))) \
-#         .select_from(inner2Statement) \
-#         .subquery()
-#     statement = select(Boat.bid, Boat.bname) \
-#         .select_from(Boat) \
-#         .join(innerStatement, text("bid = bid1"))   # This leads to a cartesian join??
-#     print(str(statement))
-#     results = session.execute(statement).fetchall()
-#     assert results == ans
-
 def test_q4():
-    ans = [(101, 'Interlake')]
+    ans = [(104, 'Clipper')]
 
     inner2Statement = select(Reservation.bid, func.count().label("counts")) \
         .select_from(Reservation) \
         .group_by(Reservation.bid) \
-        .subquery()
-    innerStatement = select(Reservation.bid, func.max(text("counts"))) \
+        .alias("temp1")
+    innerWhereStatement = select(func.count().label("counts")) \
+        .select_from(Reservation) \
+        .group_by(Reservation.bid) \
+        .alias("temp2")
+    innerStatement = select(text("bid as bid_temp")) \
         .select_from(inner2Statement) \
-        .subquery()
+        .where(text("counts = (" + str(select(func.max(text("counts"))) \
+            .select_from(innerWhereStatement)) + ")")) \
+        .alias("temp3")
     statement = select(Boat.bid, Boat.bname) \
         .select_from(Boat) \
-        .join(innerStatement)   # This leads to a cartesian join??
+        .join(innerStatement, text("bid = bid_temp"))   # This leads to a cartesian join??
     results = session.execute(statement).fetchall()
     assert results == ans
 
