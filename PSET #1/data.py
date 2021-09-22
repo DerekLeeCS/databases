@@ -22,7 +22,7 @@ sailors = [
 ]
 
 boats = [
-	(101,'Interlake','blue',48),
+	(101,'Interlake','blue',45),
 	(102,'Interlake','red',45),
 	(103,'Clipper','green',40),
 	(104,'Clipper','red',40),
@@ -32,8 +32,8 @@ boats = [
 	(108,'Driftwood','red',35),
 	(109,'Driftwood','blue',35),
 	(110,'Klapser','red',30),
-	(111,'Sooney','green',18),
-	(112,'Sooney','red',15),
+	(111,'Sooney','green',28),
+	(112,'Sooney','red',28),
 ]
 
 reserves = [
