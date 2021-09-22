@@ -4,7 +4,12 @@ from sqlalchemy.orm import sessionmaker, backref, relationship
 from data import sailors, boats, reserves
 import datetime
 
-engine = create_engine('sqlite:///sailors.db', echo=True)
+# Used to get DB connection
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Get parent dir
+from dbInfo import Info
+
+engine = create_engine('mysql+mysqlconnector://' + Info.connect + '/pset1', echo=True)
 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -15,7 +20,7 @@ class Sailor(Base):
     __tablename__ = 'sailors'
 
     sid = Column(Integer, primary_key=True)
-    sname = Column(String)
+    sname = Column(String(20))
     rating = Column(Integer)
     age = Column(Integer)
 
@@ -32,8 +37,8 @@ class Boat(Base):
     __tablename__ = 'boats'
 
     bid = Column(Integer, primary_key=True)
-    bname = Column(String)
-    color = Column(String)
+    bname = Column(String(20))
+    color = Column(String(20))
     length = Column(Integer)
 
     reservations = relationship('Reservation',
@@ -77,6 +82,7 @@ def initTable(tableClass, rawData):
     session.commit()
 
 # Drop, Create, Insert Tables
-initTable(Sailor, sailors)
-initTable(Boat, boats)
-initTable(Reservation, reserves)
+if __name__ == '__main__':
+    initTable(Reservation, reserves)
+    initTable(Sailor, sailors)
+    initTable(Boat, boats)
