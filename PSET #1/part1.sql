@@ -40,7 +40,7 @@ ON counts = max_count;
 SELECT sid, sname
 FROM sailors
 INNER JOIN (
-    SELECT sid
+    SELECT DISTINCT sid
     FROM reserves
     WHERE sid NOT IN (
         SELECT sid
@@ -53,7 +53,8 @@ INNER JOIN (
         USING(bid)
     )
 ) AS temp2
-USING(sid);
+USING(sid)
+ORDER BY sid;
 
 /* Q4 */
 SELECT bid, bname

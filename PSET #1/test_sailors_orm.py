@@ -42,6 +42,38 @@ def test_q1():
 
     assert results == ans
 
+def test_q2():
+    ans = []
+
+def test_q3():
+    ans = [
+        (23, 'emilio'),
+        (24, 'scruntus'),
+        (35, 'figaro'),
+        (61, 'ossola'),
+        (62, 'shaun'),
+    ]
+
+    excludeInnerStatement = select(Boat.bid) \
+        .select_from(Boat) \
+        .where(Boat.color != "red") \
+        .alias("temp1")
+    excludeStatement = select(Reservation.sid) \
+        .select_from(Reservation) \
+        .join(excludeInnerStatement)
+    excludeStatement = excludeStatement.compile(compile_kwargs={"literal_binds": True})
+    innerStatement = select(Reservation.sid).distinct() \
+        .select_from(Reservation) \
+        .where(text("sid NOT IN (" + str(excludeStatement) + ")")) \
+        .alias("temp2")
+    statement = select(Sailor.sid, Sailor.sname) \
+        .select_from(Sailor) \
+        .join(innerStatement) \
+        .order_by(Sailor.sid)
+    results = session.execute(statement).fetchall()
+    
+    assert results == ans
+
 def test_q4():
     ans = [(104, 'Clipper')]
 
