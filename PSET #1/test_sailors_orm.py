@@ -1,10 +1,15 @@
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, column
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 from sqlalchemy.sql.expression import except_, text
 from sailors_orm import Sailor, Boat, Reservation
 
-engine = create_engine('sqlite:///sailors.db', echo=True)
+# Used to get DB connection
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Get parent dir
+from dbInfo import Info
+
+engine = create_engine('mysql+mysqlconnector://' + Info.connect + '/pset1', echo=True)
 
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -73,8 +78,6 @@ def test_q5():
         (95, 'bob')
     ]
 
-    mainStatement = select(Sailor.sid, Sailor.sname) \
-        .select_from(Sailor)
     excludeInner2Statement = select(Boat.bid) \
         .select_from(Boat) \
         .where(Boat.color == "red") \
@@ -86,7 +89,10 @@ def test_q5():
     excludeStatement = select(Sailor.sid, Sailor.sname) \
         .select_from(Sailor) \
         .join(excludeInnerStatement)
-    statement = except_(mainStatement, excludeStatement)
+    excludeStatement = excludeStatement.compile(compile_kwargs={"literal_binds": True})
+    statement = select(Sailor.sid, Sailor.sname) \
+        .select_from(Sailor) \
+        .where(text("(sid, sname) NOT IN (" + str(excludeStatement) + ")"))
     results = session.execute(statement).fetchall()
 
     assert results == ans
