@@ -1,7 +1,7 @@
-from sqlalchemy import create_engine, func, column
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
-from sqlalchemy.sql.expression import except_, text
+from sqlalchemy.sql.expression import text, distinct
 from sailors_orm import Sailor, Boat, Reservation
 
 # Used to get DB connection
@@ -44,6 +44,30 @@ def test_q1():
 
 def test_q2():
     ans = []
+
+    innerStatement1 = select(text("sailors.*"), Reservation.bid) \
+        .select_from(Sailor) \
+        .join(Reservation) \
+        .alias("temp1")
+    innerStatement2 = select(text("sid"), text("sname"), Boat.bid).distinct() \
+        .select_from(Boat) \
+        .join(innerStatement1, text("boats.bid = temp1.bid")) \
+        .where(Boat.color == "red") \
+        .alias("temp2")
+    innerStatement3 = select(text("sid"), text("sname"), func.count().label("counts")) \
+        .select_from(innerStatement2) \
+        .group_by(text("sid"), text("sname")) \
+        .alias("temp3")
+    innerStatement4 = select(func.count(distinct(Boat.bid)).label("max_count")) \
+        .select_from(Boat) \
+        .where(Boat.color == "red") \
+        .alias("temp4")
+    statement = select(text("sid"), text("sname")) \
+        .select_from(innerStatement3) \
+        .join(innerStatement4, text("counts = max_count"))
+    results = session.execute(statement).fetchall()
+
+    assert results == ans
 
 def test_q3():
     ans = [
