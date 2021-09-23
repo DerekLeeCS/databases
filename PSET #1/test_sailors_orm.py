@@ -27,7 +27,7 @@ def test_q1():
         (109, 'Driftwood', 4),
         (110, 'Klapser', 3),
         (111, 'Sooney', 1),
-        (112, 'Sooney', 1)
+        (112, 'Sooney', 1),
     ]
 
     innerStatement = select(Reservation.bid, func.count().label("num_reserves")) \
@@ -45,22 +45,22 @@ def test_q1():
 def test_q4():
     ans = [(104, 'Clipper')]
 
-    inner2Statement = select(Reservation.bid, func.count().label("counts")) \
+    innerStatement1 = select(Reservation.bid, func.count().label("counts")) \
         .select_from(Reservation) \
         .group_by(Reservation.bid) \
         .alias("temp1")
-    innerWhereStatement = select(func.count().label("counts")) \
+    innerWhereStatement2 = select(func.count().label("counts")) \
         .select_from(Reservation) \
         .group_by(Reservation.bid) \
         .alias("temp2")
-    innerStatement = select(text("bid as bid_temp")) \
-        .select_from(inner2Statement) \
+    innerStatement3 = select(text("bid AS bid_temp")) \
+        .select_from(innerStatement1) \
         .where(text("counts = (" + str(select(func.max(text("counts"))) \
-            .select_from(innerWhereStatement)) + ")")) \
+            .select_from(innerWhereStatement2)) + ")")) \
         .alias("temp3")
     statement = select(Boat.bid, Boat.bname) \
         .select_from(Boat) \
-        .join(innerStatement, text("bid = bid_temp"))
+        .join(innerStatement3, Boat.bid == text("bid_temp"))
     results = session.execute(statement).fetchall()
 
     assert results == ans
@@ -75,16 +75,16 @@ def test_q5():
         (74, 'horatio'),
         (85, 'art'),
         (90, 'vin'),
-        (95, 'bob')
+        (95, 'bob'),
     ]
 
-    excludeInner2Statement = select(Boat.bid) \
+    excludeInnerStatement2 = select(Boat.bid) \
         .select_from(Boat) \
         .where(Boat.color == "red") \
         .alias("temp1")
     excludeInnerStatement = select(Reservation.sid) \
         .select_from(Reservation) \
-        .join(excludeInner2Statement) \
+        .join(excludeInnerStatement2) \
         .alias("temp2")
     excludeStatement = select(Sailor.sid, Sailor.sname) \
         .select_from(Sailor) \
@@ -122,7 +122,7 @@ def test_q7():
         (10, 58, 'rusty', 35),
         (10, 60, 'jit', 35),
         (10, 62, 'shaun', 35),
-        (10, 71, 'zorba', 35)
+        (10, 71, 'zorba', 35),
     ]
 
     innerStatement = select(Sailor.rating, func.min(Sailor.age).label("min_age")) \
@@ -136,3 +136,55 @@ def test_q7():
     results = session.execute(statement).fetchall()
 
     assert results == ans
+
+def test_q8():
+    ans = [
+        (101, 22, 'dusting'),
+        (101, 64, 'horatio'),
+        (102, 22, 'dusting'),
+        (102, 31, 'lubber'),
+        (102, 64, 'horatio'),
+        (103, 22, 'dusting'),
+        (103, 31, 'lubber'),
+        (103, 74, 'horatio'),
+        (104, 22, 'dusting'),
+        (104, 23, 'emilio'),
+        (104, 24, 'scruntus'),
+        (104, 31, 'lubber'),
+        (104, 35, 'figaro'),
+        (105, 23, 'emilio'),
+        (105, 35, 'figaro'),
+        (105, 59, 'stum'),
+        (106, 60, 'jit'),
+        (107, 88, 'dan'),
+        (108, 89, 'dye'),
+        (109, 59, 'stum'),
+        (109, 60, 'jit'),
+        (109, 89, 'dye'),
+        (109, 90, 'vin'),
+        (110, 88, 'dan'),
+        (111, 88, 'dan'),
+        (112, 61, 'ossola'),
+    ]
+
+    innerStatement1 = select(Reservation.bid, Reservation.sid, func.count().label("counts")) \
+        .select_from(Reservation) \
+        .group_by(Reservation.bid, Reservation.sid) \
+        .alias("temp1")
+    innerStatement2 = select(text("bid AS bid_temp"), func.max(text("counts")).label("max_counts")) \
+        .select_from(innerStatement1) \
+        .group_by(text("bid_temp")) \
+        .alias("temp2")
+    innerStatement3 = select(Reservation.bid, Reservation.sid, func.count().label("counts"), text("max_counts")) \
+        .select_from(Reservation) \
+        .join(innerStatement2, Reservation.bid == text("bid_temp")) \
+        .group_by(Reservation.bid, Reservation.sid) \
+        .alias("temp3")
+    statement = select(text("bid"), Sailor.sid, Sailor.sname) \
+        .select_from(Sailor) \
+        .join(innerStatement3) \
+        .where(text("counts = max_counts")) \
+        .order_by(text("bid"), Sailor.sid)
+    results = session.execute(statement).fetchall()
+
+    assert results == ans    
