@@ -16,6 +16,7 @@ session = Session()
 
 Base = declarative_base()
 
+
 class Sailor(Base):
     __tablename__ = 'sailors'
 
@@ -32,6 +33,7 @@ class Sailor(Base):
 
     def __repr__(self):
         return "<Sailor(id=%s, name='%s', rating=%s, age=%s)>" % (self.sid, self.sname, self.rating, self.age)
+
 
 class Boat(Base):
     __tablename__ = 'boats'
@@ -53,6 +55,7 @@ class Boat(Base):
     def __repr__(self):
         return "<Boat(id=%s, name='%s', color=%s)>" % (self.bid, self.bname, self.color)
 
+
 class Reservation(Base):
     __tablename__ = 'reserves'
     __table_args__ = (PrimaryKeyConstraint('sid', 'bid', 'day'), {})
@@ -71,6 +74,7 @@ class Reservation(Base):
     def __repr__(self):
         return "<Reservation(sid=%s, bid=%s, day=%s)>" % (self.sid, self.bid, self.day)
 
+
 def initTable(tableClass, rawData):
     # Reset the table
     tableClass.__table__.drop(engine, checkfirst=True)
@@ -80,6 +84,7 @@ def initTable(tableClass, rawData):
     data = [tableClass(x) for x in rawData]
     session.bulk_save_objects(data)
     session.commit()
+
 
 # Drop, Create, Insert Tables
 if __name__ == '__main__':
