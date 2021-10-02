@@ -1,8 +1,11 @@
+from typing import List, Tuple
+
 from sqlalchemy import create_engine, Column, Integer, String, DateTime, PrimaryKeyConstraint, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, backref, relationship
-from data import sailors, boats, reserves
 import datetime
+
+from data import sailors, boats, reserves
 
 # Used to get DB connection
 import os, sys
@@ -25,7 +28,7 @@ class Sailor(Base):
     rating = Column(Integer)
     age = Column(Integer)
 
-    def __init__(self, data):
+    def __init__(self, data: Tuple[Integer, String, Integer, String]):
         self.sid = data[0]
         self.sname = data[1]
         self.rating = data[2]
@@ -46,7 +49,7 @@ class Boat(Base):
     reservations = relationship('Reservation',
                                 backref=backref('boat', cascade='delete'))
 
-    def __init__(self, data):
+    def __init__(self, data: Tuple[Integer, String, String, Integer]):
         self.bid = data[0]
         self.bname = data[1]
         self.color = data[2]
@@ -66,7 +69,7 @@ class Reservation(Base):
 
     sailor = relationship('Sailor')
 
-    def __init__(self, data):
+    def __init__(self, data: Tuple[Integer, Integer, String]):
         self.sid = data[0]
         self.bid = data[1]
         self.day = datetime.datetime.strptime(data[2], "%Y/%m/%d")
@@ -75,19 +78,23 @@ class Reservation(Base):
         return "<Reservation(sid=%s, bid=%s, day=%s)>" % (self.sid, self.bid, self.day)
 
 
-def initTable(tableClass, rawData):
-    # Reset the table
-    tableClass.__table__.drop(engine, checkfirst=True)
-    tableClass.__table__.create(engine, checkfirst=True)
+def initTable(tables: List[Tuple[String, List]]):
+    # Reset the tables
+    [table[0].__table__.drop(engine, checkfirst=True) for table in tables]
+    [table[0].__table__.create(engine, checkfirst=True) for table in reversed(tables)]
 
     # Insert data
-    data = [tableClass(x) for x in rawData]
-    session.bulk_save_objects(data)
+    # For each table, uses data to initalize specified table class and then inserts data
+    [session.bulk_save_objects([table[0](x) for x in table[1]])
+        for table in reversed(tables)]
     session.commit()
 
 
 # Drop, Create, Insert Tables
 if __name__ == '__main__':
-    initTable(Reservation, reserves)
-    initTable(Sailor, sailors)
-    initTable(Boat, boats)
+    initTable([
+        (Reservation, reserves),
+        (Sailor, sailors),
+        (Boat, boats)
+    ])
+    print("Succeeded")
