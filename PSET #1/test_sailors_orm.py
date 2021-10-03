@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import select
 from sqlalchemy.sql.expression import text, distinct
-from sailors_orm import Sailor, Boat, Reservation
+from sailors_orm import Sailor, Boat, Reservation, Review
 
 # Used to get DB connection
 import os, sys
@@ -244,3 +244,12 @@ def test_q8():
     results = session.execute(statement).fetchall()
 
     assert results == ans    
+
+def test_average_rating():
+    ans = [(3,)]
+
+    statement = select(func.avg(Review.rating)) \
+        .select_from(Review)
+    results = session.execute(statement).fetchall()
+
+    assert results == ans

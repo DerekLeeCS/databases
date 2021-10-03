@@ -5,7 +5,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, backref, relationship
 import datetime
 
-from data import sailors, boats, reserves
+from sqlalchemy.sql.sqltypes import Numeric
+
+from data import sailors, boats, reserves, reviews
 
 # Used to get DB connection
 import os, sys
@@ -61,21 +63,39 @@ class Boat(Base):
 
 class Reservation(Base):
     __tablename__ = 'reserves'
-    __table_args__ = (PrimaryKeyConstraint('sid', 'bid', 'day'), {})
 
+    rsrvid = Column(Integer, primary_key=True)
     sid = Column(Integer, ForeignKey('sailors.sid'))
     bid = Column(Integer, ForeignKey('boats.bid'))
     day = Column(DateTime)
 
-    sailor = relationship('Sailor')
-
-    def __init__(self, data: Tuple[Integer, Integer, String]):
-        self.sid = data[0]
-        self.bid = data[1]
-        self.day = datetime.datetime.strptime(data[2], "%Y/%m/%d")
+    def __init__(self, data: Tuple[Integer, Integer, Integer, String]):
+        self.rsrvid = data[0]
+        self.sid = data[1]
+        self.bid = data[2]
+        self.day = datetime.datetime.strptime(data[3], "%Y/%m/%d")
 
     def __repr__(self):
-        return "<Reservation(sid=%s, bid=%s, day=%s)>" % (self.sid, self.bid, self.day)
+        return "<Reservation(rsrvid=%s, sid=%s, bid=%s, day=%s)>" % (self.rsrvid, self.sid, self.bid, self.day)
+
+
+class Review(Base):
+    __tablename__ = 'reviews'
+    __table_args__ = (PrimaryKeyConstraint('rsrvid', 'contents', 'rating', 'day'), {})
+    
+    rsrvid = Column(Integer, ForeignKey('reserves.rsrvid'))
+    contents = Column(String(160))
+    rating = Column(Numeric(2,1))
+    day = Column(DateTime)
+
+    def __init__(self, data: Tuple[Integer, String, Numeric, String]):
+        self.rsrvid = data[0]
+        self.contents = data[1]
+        self.rating = data[2]
+        self.day = datetime.datetime.strptime(data[3], "%Y/%m/%d")
+
+    def __repr__(self):
+        return "<Review(rsrvid=%s, contents=%s, rating=%s, day=%s)>" % (self.rsrvid, self.contents, self.rating, self.day)
 
 
 def initTable(tables: List[Tuple[String, List]]):
@@ -93,8 +113,9 @@ def initTable(tables: List[Tuple[String, List]]):
 # Drop, Create, Insert Tables
 if __name__ == '__main__':
     initTable([
+        (Review, reviews),
         (Reservation, reserves),
         (Sailor, sailors),
-        (Boat, boats)
+        (Boat, boats),
     ])
     print("Succeeded")
