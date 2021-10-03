@@ -258,13 +258,28 @@ def test_get_one_star_reviews():
     ans = [
         ("I was charged the wrong amount and the owners refused to fix it.",),
         ("Never coming back again.",),
-        ("My boat had a leak in it and I lost all of my stuff in the lake!",),
     ]
 
     statement = select(Review.contents) \
         .select_from(Review) \
         .where(Review.rating == 1) \
         .order_by(Review.rsrvid)
+    results = session.execute(statement).fetchall()
+
+    assert results == ans
+
+def test_get_average_rating_per_boat_color():
+    ans = [
+        ('blue', 3.5),
+        ('green', 4),
+        ('red', 2)
+    ]
+
+    statement = select(Boat.color, func.avg(Review.rating)) \
+        .select_from(Review) \
+        .join(Reservation) \
+        .join(Boat) \
+        .group_by(Boat.color)
     results = session.execute(statement).fetchall()
 
     assert results == ans

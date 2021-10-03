@@ -75,8 +75,8 @@ reviews = [
     (21,"I was charged the wrong amount and the owners refused to fix it.",1,'1998/12/15'),
     (25,"The boat was a little shabby, but overall the experience was good.",4.5,'1998/11/10'),
     (30,"Never coming back again.",1,'1998/8/10'),
-    (41,"",3,'1998/11/10'),
-    (42,"The cashier was rude.",1.5,'1998/9/6'),
-    (54,"My boat had a leak in it and I lost all of my stuff in the lake!",1,'1998/9/8'),
+    (41,"",2,'1998/11/10'),
+    (42,"The cashier was rude.",2,'1998/9/6'),
+    (54,"My boat had a leak in it and I lost all of my stuff in the lake!",1.5,'1998/9/8'),
     (90,"A great business in a great location! Will definitely come back.",5,'1998/9/8'),
 ]
