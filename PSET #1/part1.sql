@@ -134,3 +134,25 @@ INNER JOIN (
 USING(sid)
 WHERE counts = max_counts
 ORDER BY bid, sid;
+
+/* Q8 Alternative */
+WITH T AS (
+    SELECT bid, sid, COUNT(*) AS counts
+    FROM reserves
+    GROUP BY bid, sid
+)
+SELECT bid, sid, sname
+FROM sailors
+INNER JOIN (
+    SELECT bid, sid
+    FROM T
+    INNER JOIN (
+        SELECT bid, MAX(counts) AS max_counts
+        FROM T
+        GROUP BY bid
+    ) AS temp1
+    USING(bid)
+    WHERE counts = max_counts
+) AS temp2
+USING(sid)
+ORDER BY bid, sid
