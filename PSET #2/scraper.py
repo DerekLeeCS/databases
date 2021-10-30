@@ -8,8 +8,10 @@ from bs4 import BeautifulSoup
 url_to_scrape = 'http://books.toscrape.com/'
 
 
-def get_website_data(url: str) -> BeautifulSoup:
+def get_website_data(url: str, verbose: bool = False) -> BeautifulSoup:
     """Sends an HTTP GET request to the specified URL and returns the response inside a BeautifulSoup object."""
+    if verbose:
+        print("Scraping data from: ", file_url)
     response = requests.get(url)
     return BeautifulSoup(response.text, 'html.parser')
 
@@ -61,17 +63,34 @@ if __name__ == '__main__':
     # Get links to book categories
     book_categories = main_soup.find('div', {'class': 'side_categories'})
 
+    i = 0
     # Iterate through each book category
-    for link in book_categories.find_all('a', href=True):
+    # Skip the first one, which contains all books
+    for link in book_categories.find_all('a', href=True)[1:]:
         file_url = url_to_scrape + link['href']
-        print("Scraping data from: ", file_url)
-        category_soup = get_website_data(file_url)
 
-        # Iterate through each book
-        for book in category_soup.find('body').find('ol').find_all('article', {'class': 'product_pod'}):
-            book_info = book.find('h3').find('a', href=True)
-            book_info_dict = get_book_data(file_url, book_info)
-            print(book_info_dict)
+        # Iterate through each page
+        has_more_pages = True
+        while has_more_pages:
+            category_soup = get_website_data(file_url, verbose=True)
+
+            # Iterate through each book
+            for book in category_soup.find('body').find('ol').find_all('article', {'class': 'product_pod'}):
+                book_info = book.find('h3').find('a', href=True)
+                book_info_dict = get_book_data(file_url, book_info)
+                # print(book_info_dict)
+            
+            # Check if there is another page in the category
+            try:
+                next_url = category_soup.find('section').find('ol', {'class': 'row'}).next_sibling.next_sibling.find('ul', {'class': 'pager'}).find('li', {'class': 'next'}).find('a', href=True)['href']
+                file_url += '/../' + next_url
+                has_more_pages = True
+                time.sleep(0.25)
+            except:
+                print("No more pages.\n")
+                has_more_pages = False
 
         time.sleep(0.5)
-        break
+        i += 1
+        if i > 2:
+            break
