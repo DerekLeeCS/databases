@@ -1,4 +1,4 @@
-from typing import DefaultDict, Tuple
+from typing import DefaultDict
 from collections import defaultdict
 import requests
 import re
@@ -14,11 +14,6 @@ def get_website_data(url: str) -> BeautifulSoup:
     return BeautifulSoup(response.text, 'html.parser')
 
 
-def get_book_title(book_soup: BeautifulSoup) -> str:
-    description_content = book_soup.find('h3').find('a', href=True)
-    return description_content['title']
-
-
 def get_num_stars(book_soup: BeautifulSoup) -> str:
     # Need to do .next_sibling twice b/c it will grab white text
     star_content = book_soup.find('p', {'class': 'instock availability'}).next_sibling.next_sibling
@@ -26,16 +21,6 @@ def get_num_stars(book_soup: BeautifulSoup) -> str:
     # Finds the first match and extracts the string matching .*
     # E.g. <p class="star-rating Three"> -----> Three
     return re.search('<p class="star-rating (.*)">|$', str(star_content)).group(1)
-
-
-def get_price_and_availability(book_soup: BeautifulSoup) -> Tuple[str, str]:
-    price_and_availability_content = book_soup.find('div', {'class': 'product_price'})
-    price_content = price_and_availability_content.find('p', {'class': 'price_color'})
-    price = price_content.get_text(strip=True)
-    availability_content = price_and_availability_content.find('p', {'class': 'instock availability'})
-    availability = availability_content.get_text(strip=True)
-    is_available = availability == 'In stock'
-    return price, is_available
 
 
 def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
@@ -71,10 +56,10 @@ def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
 
 if __name__ == '__main__':
     # Scrape main website
-    soup = get_website_data(url_to_scrape)
+    main_soup = get_website_data(url_to_scrape)
 
     # Get links to book categories
-    book_categories = soup.find('div', {'class': 'side_categories'})
+    book_categories = main_soup.find('div', {'class': 'side_categories'})
 
     # Iterate through each book category
     for link in book_categories.find_all('a', href=True):
