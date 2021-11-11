@@ -1,9 +1,17 @@
 from typing import DefaultDict
-from collections import defaultdict
+
 import requests
 import re
 import time
+import pymongo
+
+from pymongo import MongoClient
+from collections import defaultdict
 from bs4 import BeautifulSoup
+
+# Used to get DB connection
+from db_info import Info
+
 
 url_to_scrape = 'http://books.toscrape.com/'
 
@@ -57,6 +65,11 @@ def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
 
 
 if __name__ == '__main__':
+    # Get database info
+    client = MongoClient(Info.connection_string)
+    db_name = client[Info.db_name]
+    collection_name = client[Info.collection_name]
+
     # Scrape main website
     main_soup = get_website_data(url_to_scrape)
 
@@ -85,7 +98,7 @@ if __name__ == '__main__':
                 next_url = category_soup.find('section').find('ol', {'class': 'row'}).next_sibling.next_sibling.find('ul', {'class': 'pager'}).find('li', {'class': 'next'}).find('a', href=True)['href']
                 file_url += '/../' + next_url
                 has_more_pages = True
-                time.sleep(0.25)
+                time.sleep(0.1)
             except:
                 print("No more pages.\n")
                 has_more_pages = False
