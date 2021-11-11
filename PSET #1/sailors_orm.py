@@ -10,11 +10,9 @@ from sqlalchemy.sql.sqltypes import Numeric
 from data import sailors, boats, reserves, reviews
 
 # Used to get DB connection
-import os, sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) # Get parent dir
-from dbInfo import Info
+from db_info import Info
 
-engine = create_engine('mysql+mysqlconnector://' + Info.connect + '/pset1', echo=True)
+engine = create_engine(Info.connection_string, echo=True)
 
 Session = sessionmaker(bind=engine)
 session = Session()

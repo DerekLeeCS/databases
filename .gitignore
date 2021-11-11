@@ -2,4 +2,4 @@ __pycache__
 .vscode
 *.jpg
 *.zip
-dbInfo.py
+db_info.py
