@@ -34,18 +34,23 @@ def get_num_stars(book_soup: BeautifulSoup) -> str:
 
 
 def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
-    book_title = book_info['title']
+    # Store product information as a dictionary
+    book_information_dict = defaultdict(str)
+    book_information_dict['Title'] = book_info['title']
 
     # Go to book product page
     book_url = file_url + '/../' + book_info['href']
     book_soup = get_website_data(book_url)
     book_soup = book_soup.find('article', {'class': 'product_page'})
 
-    # Need to do .next_sibling twice b/c it will grab white text
-    book_description = book_soup.find('div', {'id': 'product_description'}).next_sibling.next_sibling.get_text(strip=True)
+    # Some books won't have descriptions
+    try:
+        # Need to do .next_sibling twice b/c it will grab white text
+        book_description = book_soup.find('div', {'id': 'product_description'}).next_sibling.next_sibling.get_text(strip=True)
+        book_information_dict['Description'] = book_description
+    except:
+        pass
 
-    # Store product information as a dictionary
-    book_information_dict = defaultdict(str)
     book_information_rows = book_soup.find('table').find_all('tr')
     for row in book_information_rows:
         row_name = row.find('th').get_text(strip=True)
@@ -53,22 +58,37 @@ def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
         book_information_dict[row_name] = row_data
 
     # Store other information
-    book_information_dict['Title'] = book_title
     book_information_dict['Stars'] = get_num_stars(book_soup)
-    book_information_dict['Description'] = book_description
 
     # Finds the first match and extracts the string matching .*
     # E.g. In stock (19 available) -----> 19
     book_information_dict['Availability'] = re.search('In stock \((.*) available\)|$', book_information_dict['Availability']).group(1)
 
+    # Drop the extra character at the beginning of the string
+    book_information_dict['Price (excl. tax)'] = book_information_dict['Price (excl. tax)'][1:]
+    book_information_dict['Price (incl. tax)'] = book_information_dict['Price (incl. tax)'][1:]
+    book_information_dict['Tax'] = book_information_dict['Tax'][1:]
+
     return book_information_dict
+
+
+def post_process(info: DefaultDict) -> DefaultDict:
+    """Replace spaces with underscores and removes periods and parentheses."""
+    chars_to_replace = {
+        ' ': '_',
+        '.': '',
+        '(': '',
+        ')': ''
+    }
+    func = lambda x: x.translate(str.maketrans(chars_to_replace))
+    return {func(k):v for k,v in info.items()}
 
 
 if __name__ == '__main__':
     # Get database info
-    client = MongoClient(Info.connection_string)
+    client = MongoClient(Info.connection_string, authSource=Info.db_name)
     db_name = client[Info.db_name]
-    collection_name = client[Info.collection_name]
+    collection_name = db_name[Info.collection_name]
 
     # Scrape main website
     main_soup = get_website_data(url_to_scrape)
@@ -76,7 +96,6 @@ if __name__ == '__main__':
     # Get links to book categories
     book_categories = main_soup.find('div', {'class': 'side_categories'})
 
-    i = 0
     # Iterate through each book category
     # Skip the first one, which contains all books
     for link in book_categories.find_all('a', href=True)[1:]:
@@ -91,8 +110,9 @@ if __name__ == '__main__':
             for book in category_soup.find('body').find('ol').find_all('article', {'class': 'product_pod'}):
                 book_info = book.find('h3').find('a', href=True)
                 book_info_dict = get_book_data(file_url, book_info)
-                # print(book_info_dict)
-            
+                book_info_dict = post_process(book_info_dict)
+                collection_name.insert_one(book_info_dict)
+
             # Check if there is another page in the category
             try:
                 next_url = category_soup.find('section').find('ol', {'class': 'row'}).next_sibling.next_sibling.find('ul', {'class': 'pager'}).find('li', {'class': 'next'}).find('a', href=True)['href']
@@ -104,6 +124,5 @@ if __name__ == '__main__':
                 has_more_pages = False
 
         time.sleep(0.5)
-        i += 1
-        if i > 2:
-            break
+
+    print("Finished scraping.")
