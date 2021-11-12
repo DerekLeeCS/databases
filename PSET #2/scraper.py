@@ -1,4 +1,4 @@
-from typing import DefaultDict
+from typing import Any, DefaultDict
 
 import requests
 import re
@@ -33,7 +33,7 @@ def get_num_stars(book_soup: BeautifulSoup) -> str:
     return re.search('<p class="star-rating (.*)">|$', str(star_content)).group(1)
 
 
-def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
+def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict[str, Any]:
     # Store product information as a dictionary
     book_information_dict = defaultdict(str)
     book_information_dict['Title'] = book_info['title']
@@ -72,7 +72,7 @@ def get_book_data(file_url: str, book_info: BeautifulSoup) -> DefaultDict:
     return book_information_dict
 
 
-def post_process(info: DefaultDict) -> DefaultDict:
+def post_process(info: DefaultDict[str, Any]) -> DefaultDict[str, Any]:
     """Replace spaces with underscores and removes periods and parentheses."""
     chars_to_replace = {
         ' ': '_',
