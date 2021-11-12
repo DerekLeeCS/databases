@@ -111,6 +111,8 @@ if __name__ == '__main__':
                 book_info = book.find('h3').find('a', href=True)
                 book_info_dict = get_book_data(file_url, book_info)
                 book_info_dict = post_process(book_info_dict)
+
+                # Insert into the database collection
                 collection_name.insert_one(book_info_dict)
 
             # Check if there is another page in the category
