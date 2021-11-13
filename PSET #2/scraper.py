@@ -3,7 +3,6 @@ from typing import Any, DefaultDict
 import requests
 import re
 import time
-import pymongo
 
 from pymongo import MongoClient
 from collections import defaultdict
