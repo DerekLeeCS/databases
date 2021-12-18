@@ -155,4 +155,4 @@ INNER JOIN (
     WHERE counts = max_counts
 ) AS temp2
 USING(sid)
-ORDER BY bid, sid
+ORDER BY bid, sid;
